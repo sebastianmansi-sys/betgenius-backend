@@ -71,16 +71,31 @@ def write_cache(key, payload):
 ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports"
 
 ESPN_LEAGUES = [
-    # (sport_endpoint, league_endpoint, display_name, flag, sport_key)
-    ("soccer",     "ita.1",          "Serie A",          "🇮🇹", "calcio"),
-    ("soccer",     "eng.1",          "Premier League",   "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "calcio"),
-    ("soccer",     "esp.1",          "La Liga",          "🇪🇸", "calcio"),
-    ("soccer",     "ger.1",          "Bundesliga",       "🇩🇪", "calcio"),
-    ("soccer",     "fra.1",          "Ligue 1",          "🇫🇷", "calcio"),
-    ("soccer",     "uefa.champions", "Champions League", "🇪🇺", "calcio"),
-    ("soccer",     "uefa.europa",    "Europa League",    "🇪🇺", "calcio"),
-    ("basketball", "nba",            "NBA",              "🇺🇸", "basket"),
+    # ── Calcio nazionali ──
+    ("soccer", "ita.1",          "Serie A",            "🇮🇹", "calcio"),
+    ("soccer", "ita.2",          "Serie B",            "🇮🇹", "calcio"),
+    ("soccer", "eng.1",          "Premier League",     "🏴󠁧󠁢󠁥󠁮", "calcio"),
+    ("soccer", "esp.1",          "La Liga",            "🇪🇸", "calcio"),
+    ("soccer", "ger.1",          "Bundesliga",         "🇩🇪", "calcio"),
+    ("soccer", "fra.1",          "Ligue 1",            "🇫🇷", "calcio"),
+    ("soccer", "por.1",          "Primeira Liga",      "🇵🇹", "calcio"),
+    ("soccer", "ned.1",          "Eredivisie",         "🇳🇱", "calcio"),
+    ("soccer", "tur.1",          "Super Lig",          "🇹🇷", "calcio"),
+    # ── Competizioni europee ──
+    ("soccer", "uefa.champions", "Champions League",   "🇪🇺", "calcio"),
+    ("soccer", "uefa.europa",    "Europa League",      "🇪🇺", "calcio"),
+    ("soccer", "uefa.confleague","Conference League",  "🇪🇺", "calcio"),
+    ("soccer", "uefa.nations",   "Nations League",     "🇪🇺", "calcio"),
+    # ── Competizioni mondiali ──
+    ("soccer", "fifa.worldq.eu", "Qualif. Mondiali EU","🌍", "calcio"),
+    ("soccer", "fifa.cwc",       "Club World Cup",     "🌍", "calcio"),
+    ("soccer", "concacaf.champions", "CONCACAF CL",    "🌎", "calcio"),
+    ("soccer", "conmebol.libertadores", "Copa Libertadores", "🌎", "calcio"),
+    # ── Basket ──
+    ("basketball", "nba",        "NBA",                "🇺🇸", "basket"),
+    ("basketball", "nba",        "NBA Playoffs",       "🇺🇸", "basket"),
 ]
+
 
 
 def espn_scoreboard(sport_ep, league_ep, date_str):
