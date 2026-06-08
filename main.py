@@ -71,30 +71,43 @@ def write_cache(key, payload):
 ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports"
 
 ESPN_LEAGUES = [
-    # ── Calcio nazionali ──
-    ("soccer", "ita.1",          "Serie A",            "🇮🇹", "calcio"),
-    ("soccer", "ita.2",          "Serie B",            "🇮🇹", "calcio"),
-    ("soccer", "eng.1",          "Premier League",     "🏴󠁧󠁢󠁥󠁮", "calcio"),
-    ("soccer", "esp.1",          "La Liga",            "🇪🇸", "calcio"),
-    ("soccer", "ger.1",          "Bundesliga",         "🇩🇪", "calcio"),
-    ("soccer", "fra.1",          "Ligue 1",            "🇫🇷", "calcio"),
-    ("soccer", "por.1",          "Primeira Liga",      "🇵🇹", "calcio"),
-    ("soccer", "ned.1",          "Eredivisie",         "🇳🇱", "calcio"),
-    ("soccer", "tur.1",          "Super Lig",          "🇹🇷", "calcio"),
-    # ── Competizioni europee ──
-    ("soccer", "uefa.champions", "Champions League",   "🇪🇺", "calcio"),
-    ("soccer", "uefa.europa",    "Europa League",      "🇪🇺", "calcio"),
-    ("soccer", "uefa.confleague","Conference League",  "🇪🇺", "calcio"),
-    ("soccer", "uefa.nations",   "Nations League",     "🇪🇺", "calcio"),
-    # ── Competizioni mondiali ──
-    ("soccer", "fifa.worldq.eu", "Qualif. Mondiali EU","🌍", "calcio"),
-    ("soccer", "fifa.cwc",       "Club World Cup",     "🌍", "calcio"),
-    ("soccer", "concacaf.champions", "CONCACAF CL",    "🌎", "calcio"),
+    # ── Serie nazionali calcio ──
+    ("soccer", "ita.1",          "Serie A",              "🇮🇹", "calcio"),
+    ("soccer", "ita.2",          "Serie B",              "🇮🇹", "calcio"),
+    ("soccer", "eng.1",          "Premier League",       "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "calcio"),
+    ("soccer", "eng.2",          "Championship",         "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "calcio"),
+    ("soccer", "esp.1",          "La Liga",              "🇪🇸", "calcio"),
+    ("soccer", "ger.1",          "Bundesliga",           "🇩🇪", "calcio"),
+    ("soccer", "fra.1",          "Ligue 1",              "🇫🇷", "calcio"),
+    ("soccer", "por.1",          "Primeira Liga",        "🇵🇹", "calcio"),
+    ("soccer", "ned.1",          "Eredivisie",           "🇳🇱", "calcio"),
+    ("soccer", "tur.1",          "Super Lig",            "🇹🇷", "calcio"),
+    ("soccer", "bra.1",          "Brasileirao",          "🇧🇷", "calcio"),
+    ("soccer", "arg.1",          "Liga Profesional",     "🇦🇷", "calcio"),
+    ("soccer", "mls",            "MLS",                  "🇺🇸", "calcio"),
+    # ── Nazionali calcio ──
+    ("soccer", "fifa.worldq.eu", "Qualif. Mondiali EU",  "🌍", "calcio"),
+    ("soccer", "fifa.worldq.conmebol", "Qualif. Mondiali SA", "🌎", "calcio"),
+    ("soccer", "uefa.euro",      "Europei UEFA",         "🇪🇺", "calcio"),
+    ("soccer", "copa.america",   "Copa America",         "🌎", "calcio"),
+    ("soccer", "fifa.world",     "Mondiali FIFA",        "🌍", "calcio"),
+    ("soccer", "uefa.nations",   "Nations League",       "🇪🇺", "calcio"),
+    ("soccer", "concacaf.gold",  "Gold Cup",             "🌎", "calcio"),
+    ("soccer", "africa.nations", "Coppa d'Africa",       "🌍", "calcio"),
+    # ── Coppe europee ──
+    ("soccer", "uefa.champions", "Champions League",     "🇪🇺", "calcio"),
+    ("soccer", "uefa.europa",    "Europa League",        "🇪🇺", "calcio"),
+    ("soccer", "uefa.confleague","Conference League",    "🇪🇺", "calcio"),
+    # ── Coppe mondiali club ──
+    ("soccer", "fifa.cwc",       "Club World Cup",       "🌍", "calcio"),
     ("soccer", "conmebol.libertadores", "Copa Libertadores", "🌎", "calcio"),
+    ("soccer", "concacaf.champions",    "CONCACAF CL",   "🌎", "calcio"),
     # ── Basket ──
-    ("basketball", "nba",        "NBA",                "🇺🇸", "basket"),
-    ("basketball", "nba",        "NBA Playoffs",       "🇺🇸", "basket"),
+    ("basketball", "nba",        "NBA",                  "🇺🇸", "basket"),
+    ("basketball", "wnba",       "WNBA",                 "🇺🇸", "basket"),
+    ("basketball", "mens-college-basketball", "NCAA",    "🇺🇸", "basket"),
 ]
+
 
 
 
@@ -433,6 +446,131 @@ def enrich_cards_corners(match: dict) -> dict:
 # ─────────────────────────────────────────────────────────
 # SCRAPING PRINCIPALE
 # ─────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────
+# TENNIS — API pubblica RapidAPI-free / api-tennis
+# ─────────────────────────────────────────────────────────
+TENNIS_TOURNAMENTS = [
+    "Australian Open", "Roland Garros", "Wimbledon", "US Open",
+    "ATP Finals", "Masters 1000", "ATP 500", "ATP 250",
+    "WTA Finals", "WTA 1000", "WTA 500",
+]
+
+def fetch_tennis_matches() -> list:
+    """Recupera partite tennis di oggi e domani da ESPN."""
+    today    = datetime.now().strftime("%Y%m%d")
+    tomorrow = (datetime.now() + timedelta(days=1)).strftime("%Y%m%d")
+    matches  = []
+    match_id = 9000   # ID alto per non collidere con calcio/basket
+
+    for date_str in [today, tomorrow]:
+        url = f"{ESPN_BASE}/tennis/atp/scoreboard?dates={date_str}&limit=50"
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=12)
+            r.raise_for_status()
+            events = r.json().get("events", [])
+            for ev in events:
+                parsed = parse_tennis_event(ev, date_str, match_id, "ATP")
+                if parsed:
+                    matches.append(parsed)
+                    match_id += 1
+        except Exception as e:
+            log.warning(f"Tennis ATP {date_str}: {e}")
+
+        url_wta = f"{ESPN_BASE}/tennis/wta/scoreboard?dates={date_str}&limit=50"
+        try:
+            r = requests.get(url_wta, headers=HEADERS, timeout=12)
+            r.raise_for_status()
+            events = r.json().get("events", [])
+            for ev in events:
+                parsed = parse_tennis_event(ev, date_str, match_id, "WTA")
+                if parsed:
+                    matches.append(parsed)
+                    match_id += 1
+        except Exception as e:
+            log.warning(f"Tennis WTA {date_str}: {e}")
+
+    log.info(f"Tennis: {len(matches)} partite trovate")
+    return matches
+
+
+def parse_tennis_event(ev, date_str, match_id, circuit) -> dict | None:
+    comp  = (ev.get("competitions") or [{}])[0]
+    comps = comp.get("competitors") or []
+    if len(comps) < 2:
+        return None
+
+    status = comp.get("status", {}).get("type", {}).get("name", "")
+    if "STATUS_SCHEDULED" not in status and "scheduled" not in status.lower():
+        return None
+
+    p1 = comps[0].get("athlete", {}) or comps[0].get("team", {})
+    p2 = comps[1].get("athlete", {}) or comps[1].get("team", {})
+    name1 = p1.get("displayName", "").strip()
+    name2 = p2.get("displayName", "").strip()
+    if not name1 or not name2:
+        return None
+
+    raw_date = ev.get("date", "")
+    try:
+        dt_utc   = datetime.strptime(raw_date[:16], "%Y-%m-%dT%H:%M").replace(tzinfo=timezone.utc)
+        dt_local = dt_utc + timedelta(hours=2)
+        display_time = dt_local.strftime("%H:%M")
+    except Exception:
+        display_time = "TBD"
+
+    today_str  = datetime.now().strftime("%Y%m%d")
+    date_label = "Oggi" if date_str == today_str else "Domani"
+
+    # Ranking dai record ESPN
+    def get_rank(comp_item):
+        try:
+            return int(comp_item.get("rank", 999))
+        except Exception:
+            return 999
+
+    rank1 = get_rank(comps[0])
+    rank2 = get_rank(comps[1])
+
+    # Win probability basata sul ranking
+    if rank1 < rank2:
+        wp1 = round(min(85, 50 + (rank2 - rank1) * 0.3), 1)
+    elif rank2 < rank1:
+        wp1 = round(max(15, 50 - (rank1 - rank2) * 0.3), 1)
+    else:
+        wp1 = 50.0
+
+    tournament = ev.get("season", {}).get("slug", circuit)
+    flag = "🎾"
+
+    return {
+        "id":       match_id,
+        "home":     name1,
+        "away":     name2,
+        "league":   f"Tennis {circuit} — {tournament}",
+        "flag":     flag,
+        "sport":    "tennis",
+        "time":     display_time,
+        "date":     date_label,
+        "raw_date": date_str,
+        "homeForm": ["?"] * 5,
+        "awayForm": ["?"] * 5,
+        "stats": {
+            "rank1":    rank1,
+            "rank2":    rank2,
+            "circuit":  circuit,
+            "surface":  ev.get("season", {}).get("type", {}).get("name", "Hard"),
+            "h2h":      f"{name1} (#{rank1}) vs {name2} (#{rank2}) — {circuit}",
+            "hG": 0, "aG": 0, "btts": 0, "o25": 0, "o35": 0,
+            "hPPG": 0, "aPPG": 0, "totAvg": 0,
+            "hYellow": 0, "aYellow": 0, "hRed": 0, "aRed": 0,
+            "totalCards": 0, "over35Cards": 0, "over45Cards": 0,
+            "hCorners": 0, "aCorners": 0, "totalCorners": 0,
+            "over85Corners": 0, "over95Corners": 0, "over105Corners": 0,
+            "corners1H": 0, "over45Corners1H": 0,
+        },
+        "winProb": {"home": wp1, "away": round(100 - wp1, 1)},
+    }
+
 def scrape_all_matches() -> list:
     log.info("Scraping ESPN — partite oggi e domani...")
     today    = datetime.now().strftime("%Y%m%d")
@@ -448,6 +586,9 @@ def scrape_all_matches() -> list:
                     all_matches.append(parsed)
                     match_id += 1
         time.sleep(0.25)
+    # Aggiungi partite tennis
+    tennis_matches = fetch_tennis_matches()
+    all_matches.extend(tennis_matches)
 
     log.info(f"ESPN: {len(all_matches)} partite. Avvio enrichment cartellini/angoli...")
 
@@ -484,6 +625,39 @@ def analyze_match_ai(match: dict) -> dict:
         f"Pareggio={wp.get('draw','?')}% "
         f"Trasferta={wp.get('away','?')}%"
     ) if wp else ""
+    is_tennis = match["sport"] == "tennis"
+    if is_tennis:
+        s  = match["stats"]
+        wp = match.get("winProb", {})
+        prompt = f"""Sei un esperto di scommesse tennis. Analizza il match e dai UN pronostico ottimale (quota 1.30-4.00).
+Mercati disponibili: Vincitore Match (ML), Handicap Set, Over/Under Games totali, Over/Under Set.
+
+Match: {match['home']} vs {match['away']}
+Circuito: {s.get('circuit','ATP')} | Superficie: {s.get('surface','Hard')}
+Ranking: {match['home']}=#{s.get('rank1',999)}, {match['away']}=#{s.get('rank2',999)}
+Probabilità stimata: {match['home']}={wp.get('home',50)}%, {match['away']}={wp.get('away',50)}%
+H2H: {s.get('h2h','')}
+
+Rispondi SOLO JSON valido:
+{{"main":{{"prediction":"...","betType":"ML|Handicap Set|Over/Under Games|Over/Under Set","odds":1.85,"confidence":72,"analysis":"2-3 frasi","keyFactors":["f1","f2","f3"],"risk":"Basso|Medio|Alto"}},"cards":null,"corners1h":null,"corners":null}}"""
+        try:
+            msg = client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=600,
+                system="Esperto analista scommesse tennis. Rispondi SOLO JSON valido senza backtick.",
+                messages=[{"role": "user", "content": prompt}],
+            )
+            text = msg.content[0].text.strip()
+            start = text.find("{"); end = text.rfind("}") + 1
+            result = json.loads(text[start:end])
+            sub = result.get("main")
+            if sub:
+                sub["odds"]       = max(1.01, min(5.0, float(sub.get("odds", 1.8))))
+                sub["confidence"] = max(50, min(95, int(sub.get("confidence", 65))))
+            return result
+        except Exception as e:
+            log.warning(f"Tennis AI error: {e}")
+            return _fallback_prediction(match)
 
     if is_calc:
         prompt = f"""Sei un analista professionista di scommesse sportive.
