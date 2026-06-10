@@ -20,7 +20,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+# ==================== PAGINA BENVENUTA ====================
+@app.get("/")
+async def root():
+    return {
+        "message": "✅ BetGenius AI Backend è attivo!",
+        "status": "online",
+        "endpoints": {
+            "Calcio": "/matches/football",
+            "Basket": "/matches/basket",
+            "Tennis": "/matches/tennis",
+            "Live": "/matches/live",
+            "Pronostici AI": "POST /ai/predictions"
+        },
+        "info": "Prova ad aprire /matches/football"
+    }
 # ==================== CHIAVI API ====================
 FOOTBALL_API_KEY = os.getenv('FOOTBALL_API_KEY')
 ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY')
