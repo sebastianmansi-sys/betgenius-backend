@@ -1,9 +1,14 @@
-services:
-  - type: web
+ - type: web
     name: betgenius-backend
-    runtime: python
+    env: python
+    region: frankfurt
+    plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    startCommand: gunicorn main:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
     envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: REFRESH_TOKEN
+        value: betgenius2025
       - key: PYTHON_VERSION
-        value: 3.11
+        value: 3.11.0
